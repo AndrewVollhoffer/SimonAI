@@ -168,7 +168,7 @@ stream.start_stream()
 
 # VOICE RECOGNITION SETUP WITH VOSK
 # Grab the model you want here: https://alphacephei.com/vosk/models and reference the absolute path
-small_boi = Model(r"C:\Users\Andy\Documents\Code\Vosk Models\vosk-model-small-en-us-0.15")
+small_boi = Model(r"/home/andy/Downloads/vosk-model-small-en-us-0.15")
 
 recognizer = KaldiRecognizer(small_boi, samplerate)
 recognizer.SetWords(False)
