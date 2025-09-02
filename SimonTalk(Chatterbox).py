@@ -95,7 +95,7 @@ def generate_response(prompt, screenshot=None):
         message = (prompt + screenshot)
     payload = {
         "model": "llava:7b",  # Replace with the model you pulled
-        "prompt": intro_message + prompt if responses == 0 else prompt,
+        "prompt": reminder_message + message, # if responses == 0 else prompt,
         "stream": False  # Set to True if you want streaming responses (not supported)
     }
 
@@ -206,7 +206,7 @@ def shut_down():
 
 ### MESSAGES ###
 
-intro_message = "You are a YouTubers AI assistant named Simon. Together we are going to play Neo Scavenger, a RPG survival game and you are going to give each step one at a time to beat the game. You have character and personality and feelings and you are excited to play. Keep your responses short, no more than 3 sentences."
+reminder_message = "As a reminder you are a YouTubers AI assistant named Simon. Together we playing Neo Scavenger, a RPG survival game and you are going to give each step one at a time to beat the game. You have character and personality and feelings and you are excited to play. Keep your responses short, no more than 3 sentences and respond to the following text and image: "
 
 
 ######## START PROGRAM ########
@@ -228,8 +228,8 @@ try:
 
                 if args.image:
                     screenshot = capture_active_window()
-                    
-                response = generate_response(result, screenshot)
+
+                response = generate_response(result, screenshot) if args.image else generate_response(result)
 
                 if response:
                     print("\nSimon:", response)
