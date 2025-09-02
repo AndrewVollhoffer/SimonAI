@@ -8,6 +8,9 @@ import torchaudio as ta
 import threading
 import pyaudio
 import pygame
+import pygetwindow as gw
+import mss
+import mss.tools
 
 from vosk import Model, KaldiRecognizer
 from pynput.keyboard import Key, Controller
@@ -84,20 +87,15 @@ recognizer.SetWords(False)
 
 OLLAMA_API_URL = "http://localhost:11434/api/generate"
 
-def generate_response(prompt):
+def generate_response(prompt, screenshot=None):
 
-    if responses == 0:
-        payload = {
-            "model": "llava:7b",  # Replace with the model you pulled
-            "prompt": intro_message + prompt,
-            "stream": False  # Set to True if you want streaming responses (not supported)
-        }
-    else:
-        payload = {
-            "model": "llava:7b",  # Replace with the model you pulled
-            "prompt": prompt,
-            "stream": False  # Set to True if you want streaming responses (not supported)
-        }
+    if screenshot:
+        message = (prompt + screenshot)
+    payload = {
+        "model": "llava:7b",  # Replace with the model you pulled
+        "prompt": intro_message + prompt if responses == 0 else prompt,
+        "stream": False  # Set to True if you want streaming responses (not supported)
+    }
 
     try:
         print("\n  Generating response...")
@@ -108,6 +106,30 @@ def generate_response(prompt):
     except requests.exceptions.RequestException as e:
         print(f"Error calling Ollama API: {e}")
         return None
+
+
+def capture_screenshot(filename="screenshot.png"):
+    with mss.mss() as sct:
+        monitor = sct.monitors[1]  # [0] is all monitors, [1] is primary
+        sct_img = sct.grab(monitor)
+        mss.tools.to_png(sct_img.rgb, sct_img.size, output=filename)
+    return filename
+
+
+def capture_active_window(filename="screenshot.png"):
+    window = gw.getActiveWindow()
+    if not window:
+        print("No active window found, capturing full screen instead.")
+        return capture_screenshot()  # fallback to your existing full-screen function
+
+    monitor = {"top": window.top, "left": window.left, 
+               "width": window.width, "height": window.height}
+
+    with mss.mss() as sct:
+        sct_img = sct.grab(monitor)
+        mss.tools.to_png(sct_img.rgb, sct_img.size, output=filename)
+
+    return filename
 
 
 # TEXT TO SPEECH SETUP
@@ -202,7 +224,8 @@ try:
                     print("\nYou:", result)
                     recording = False
 
-                response = generate_response(result)
+                screenshot = capture_active_window()
+                response = generate_response(result, screenshot)
 
                 if response:
                     print("\nSimon:", response)
