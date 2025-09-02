@@ -13,6 +13,7 @@ from pynput.keyboard import Key, Controller
 from pynput import keyboard
 from TTS.api import TTS
 from queue import Queue
+from pydub import AudioSegment
 
 ############# DECLARATIONS #############
 
@@ -88,6 +89,7 @@ def speak(input):
         print(f"Error splitting text: {e}")
 
     # Iterate through chunks then convert to audio file then play
+    audio_files = []
     try:
         print("\n  Chunking audio...")
         index = 0
@@ -103,10 +105,20 @@ def speak(input):
                 speaker_wav="SimonsVoice.wav",
                 language="en"
                 )
+            
+            audio_files.append(generated_voice_file)
             index += 1
             print(f"   - Done {index} of {len(chunks)} chunks.")
             
-            audio_queue.put(generated_voice_file)
+        merged_file = tempfile.NamedTemporaryFile(delete=False, suffix=".wav").name
+        merge_audio_files(audio_files, merged_file)
+
+        # Queue the single merged file
+        audio_queue.put(merged_file)
+
+        # Clean up individual chunk files
+        for f in audio_files:
+            os.remove(f)
 
     except Exception as e:
         print(f"Error generating audio files: {e}")
@@ -116,6 +128,13 @@ def speak(input):
 print("\nInitializing audio output...")
 pygame.mixer.init()
 audio_queue = Queue()
+
+def merge_audio_files(files, output_file):
+    combined = AudioSegment.empty()
+    for f in files:
+        segment = AudioSegment.from_wav(f)
+        combined += segment
+    combined.export(output_file, format="wav")
 
 def playback_thread():
     while True:
