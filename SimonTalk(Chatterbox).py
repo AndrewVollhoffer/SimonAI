@@ -24,6 +24,8 @@ from queue import Queue
 parser = argparse.ArgumentParser(description="Run Silly Simon AI")
 parser.add_argument("-s", "--split", action="store_true",
                     help="Split speech output by sentence instead of single block")
+parser.add_argument("-i", "--image", action="store_true",
+                    help="Capture active window screenshot and send to Ollama")
 args = parser.parse_args()
 
 running = False
@@ -224,7 +226,9 @@ try:
                     print("\nYou:", result)
                     recording = False
 
-                screenshot = capture_active_window()
+                if args.image:
+                    screenshot = capture_active_window()
+                    
                 response = generate_response(result, screenshot)
 
                 if response:
